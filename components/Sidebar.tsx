@@ -8,6 +8,7 @@ import {
   Columns2,
   Users,
   FolderOpen,
+  Sparkles,
   Send,
   FileText,
   Globe,
@@ -16,11 +17,11 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/",          label: "Dashboard",     icon: LayoutDashboard },
-  { href: "/pipeline",  label: "Pipeline",       icon: Columns2 },
-  { href: "/leads",     label: "Leads",          icon: Users },
-  { href: "/content",   label: "Content Store",  icon: FolderOpen },
-  { href: "/outreach",  label: "Outreach",       icon: Send },
+  { href: "/",          label: "Dashboard",      icon: LayoutDashboard, accent: false },
+  { href: "/pipeline",  label: "Pipeline",        icon: Columns2,        accent: false },
+  { href: "/leads",     label: "Leads",           icon: Users,           accent: false },
+  { href: "/generate",  label: "Lead Generator",  icon: Sparkles,        accent: true  },
+  { href: "/content",   label: "Content Store",   icon: FolderOpen,      accent: false },
 ];
 
 const comingSoon = [
@@ -52,12 +53,13 @@ export function Sidebar() {
 
       {/* Primary nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {navItems.map(({ href, label, icon: Icon }) => (
+        {navItems.map(({ href, label, icon: Icon, accent }) => (
           <Link
             key={href}
             href={href}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+              accent && pathname !== href && "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10",
               pathname === href
                 ? "bg-slate-700 text-white"
                 : "text-slate-400 hover:text-white hover:bg-slate-800"
