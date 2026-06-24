@@ -205,8 +205,26 @@ export default function ContentPage() {
             className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 hover:shadow-sm transition-all"
           >
             {/* Thumbnail */}
-            <div className={`h-36 flex items-center justify-center text-5xl relative ${thumbnailBg[asset.type as ContentType]} border-b border-slate-100`}>
-              {"thumbnail" in asset ? asset.thumbnail : typeEmoji[asset.type as ContentType]}
+            <div className={`h-36 flex items-center justify-center text-5xl relative overflow-hidden ${thumbnailBg[asset.type as ContentType]} border-b border-slate-100`}>
+              {"isMock" in asset && !asset.isMock && (asset.type === "image" || asset.type === "gif") && "url" in asset ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={asset.url as string}
+                  alt={asset.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : "isMock" in asset && !asset.isMock && asset.type === "video" && "url" in asset ? (
+                <video
+                  src={asset.url as string}
+                  className="w-full h-full object-cover"
+                  muted
+                  preload="metadata"
+                />
+              ) : "thumbnail" in asset ? (
+                asset.thumbnail
+              ) : (
+                typeEmoji[asset.type as ContentType]
+              )}
               {"isMock" in asset && !asset.isMock && (
                 <span className="absolute top-2 right-2 text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded">
                   NEW
