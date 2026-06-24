@@ -16,14 +16,14 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/",         label: "Dashboard",     icon: LayoutDashboard },
-  { href: "/pipeline", label: "Pipeline",       icon: Columns2 },
-  { href: "/leads",    label: "Leads",          icon: Users },
-  { href: "/content",  label: "Content Store",  icon: FolderOpen },
+  { href: "/",          label: "Dashboard",     icon: LayoutDashboard },
+  { href: "/pipeline",  label: "Pipeline",       icon: Columns2 },
+  { href: "/leads",     label: "Leads",          icon: Users },
+  { href: "/content",   label: "Content Store",  icon: FolderOpen },
+  { href: "/outreach",  label: "Outreach",       icon: Send },
 ];
 
 const comingSoon = [
-  { label: "Outreach",  icon: Send },
   { label: "Documents", icon: FileText },
   { label: "Partners",  icon: Globe },
   { label: "Analytics", icon: BarChart3 },
