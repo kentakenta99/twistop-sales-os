@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -34,10 +35,18 @@ export function Sidebar() {
   return (
     <div className="w-60 bg-slate-900 flex flex-col h-full flex-shrink-0">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-slate-700/60">
-        <div className="text-amber-400 font-bold text-xl tracking-tight">TwisTop</div>
-        <div className="text-slate-500 text-[10px] font-semibold tracking-widest uppercase mt-0.5">
-          Sales OS · spirit + mixers
+      <div className="px-4 py-4 border-b border-slate-700/60">
+        <Image
+          src="/logo.jpg"
+          alt="TwisTop"
+          width={160}
+          height={66}
+          className="w-full"
+          style={{ filter: "invert(1) brightness(0.95)" }}
+          priority
+        />
+        <div className="text-slate-500 text-[10px] font-semibold tracking-widest uppercase mt-1">
+          Sales OS
         </div>
       </div>
 
