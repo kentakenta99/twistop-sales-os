@@ -1,65 +1,105 @@
-import Image from "next/image";
+import { prospects, recentActivity, AXIS_A_STAGES } from "@/lib/mockData";
+import { TrendingUp, Users, Handshake, Send, MessageSquare, Calendar } from "lucide-react";
 
-export default function Home() {
+const stats = [
+  { label: "Total Leads",             value: "15",   icon: Users,          change: "+3 this week",       color: "text-slate-900" },
+  { label: "Active Deals (Axis A)",   value: "7",    icon: TrendingUp,     change: "2 in Demo stage",    color: "text-amber-600" },
+  { label: "Partner Negotiations (B)",value: "5",    icon: Handshake,      change: "1 contract signed",  color: "text-blue-600"  },
+  { label: "Outreach Sent",           value: "142",  icon: Send,           change: "This month",         color: "text-violet-600"},
+  { label: "Response Rate",           value: "8.4%", icon: MessageSquare,  change: "vs 5% target ✓",    color: "text-green-600" },
+  { label: "Meetings This Week",      value: "3",    icon: Calendar,       change: "Next: Jun 24",       color: "text-orange-600"},
+];
+
+const stageBarColors: Record<string, string> = {
+  Cold:       "bg-slate-300",
+  Contacted:  "bg-blue-400",
+  Responded:  "bg-violet-400",
+  Demo:       "bg-amber-400",
+  Proposal:   "bg-orange-400",
+  Won:        "bg-green-500",
+};
+
+const activityIcons: Record<string, string> = {
+  reply: "💬",
+  deal:  "📋",
+  doc:   "📄",
+  win:   "🏆",
+};
+
+export default function DashboardPage() {
+  const pipeline = AXIS_A_STAGES.map((stage) => ({
+    stage,
+    count: prospects.filter((p) => p.axis === "A" && p.stage === stage).length,
+  }));
+  const maxCount = Math.max(...pipeline.map((p) => p.count), 1);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+        <p className="text-slate-500 text-sm mt-1">TwisTop Global Sales Overview</p>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        {stats.map(({ label, value, icon: Icon, change, color }) => (
+          <div key={label} className="bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</div>
+              <Icon size={14} className="text-slate-300" />
+            </div>
+            <div className={`text-3xl font-bold ${color}`}>{value}</div>
+            <div className="text-xs text-slate-400 mt-1">{change}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        {/* Axis A Pipeline funnel */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="flex items-center justify-between mb-5">
+            <div className="text-sm font-semibold text-slate-900">Axis A Pipeline</div>
+            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">End Users</span>
+          </div>
+          <div className="space-y-2.5">
+            {pipeline.map(({ stage, count }) => (
+              <div key={stage} className="flex items-center gap-3">
+                <div className="w-20 text-xs text-slate-500 text-right flex-shrink-0">{stage}</div>
+                <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                  <div
+                    className={`${stageBarColors[stage]} h-5 rounded-full transition-all`}
+                    style={{ width: count > 0 ? `${(count / maxCount) * 100}%` : "0%" }}
+                  />
+                </div>
+                <div className="w-5 text-xs font-bold text-slate-600 text-right flex-shrink-0">{count}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Activity Feed */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="text-sm font-semibold text-slate-900 mb-5">Recent Activity</div>
+          <div className="space-y-4">
+            {recentActivity.map(({ id, type, message, time, axis }) => (
+              <div key={id} className="flex gap-3 items-start">
+                <div className="text-lg leading-none mt-0.5">{activityIcons[type]}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-slate-700 leading-snug">{message}</div>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-xs text-slate-400">{time}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      axis === "A" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                    }`}>
+                      Axis {axis}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

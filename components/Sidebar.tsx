@@ -1,0 +1,89 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Columns2,
+  Users,
+  FolderOpen,
+  Send,
+  FileText,
+  Globe,
+  BarChart3,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+  { href: "/",         label: "Dashboard",     icon: LayoutDashboard },
+  { href: "/pipeline", label: "Pipeline",       icon: Columns2 },
+  { href: "/leads",    label: "Leads",          icon: Users },
+  { href: "/content",  label: "Content Store",  icon: FolderOpen },
+];
+
+const comingSoon = [
+  { label: "Outreach",  icon: Send },
+  { label: "Documents", icon: FileText },
+  { label: "Partners",  icon: Globe },
+  { label: "Analytics", icon: BarChart3 },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+
+  return (
+    <div className="w-60 bg-slate-900 flex flex-col h-full flex-shrink-0">
+      {/* Logo */}
+      <div className="px-5 py-5 border-b border-slate-700/60">
+        <div className="text-amber-400 font-bold text-xl tracking-tight">TwisTop</div>
+        <div className="text-slate-500 text-[10px] font-semibold tracking-widest uppercase mt-0.5">
+          Sales OS · spirit + mixers
+        </div>
+      </div>
+
+      {/* Primary nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        {navItems.map(({ href, label, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+              pathname === href
+                ? "bg-slate-700 text-white"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            )}
+          >
+            <Icon size={15} />
+            {label}
+          </Link>
+        ))}
+
+        <div className="pt-5 pb-1 px-3">
+          <div className="text-[10px] text-slate-600 uppercase tracking-widest font-semibold">
+            Coming Soon
+          </div>
+        </div>
+
+        {comingSoon.map(({ label, icon: Icon }) => (
+          <div
+            key={label}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 cursor-not-allowed select-none"
+          >
+            <Icon size={15} />
+            {label}
+            <span className="ml-auto text-[10px] bg-slate-800 text-slate-600 px-1.5 py-0.5 rounded font-semibold">
+              Soon
+            </span>
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="px-5 py-4 border-t border-slate-700/60">
+        <div className="text-[10px] text-slate-600 font-medium">v0.1 · Demo mode</div>
+        <div className="text-[10px] text-slate-700 mt-0.5">Auth disabled — open access</div>
+      </div>
+    </div>
+  );
+}
