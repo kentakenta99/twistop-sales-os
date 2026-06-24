@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { contentAssets, type ContentType } from "@/lib/mockData";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 import { Mail, Share2, Download, Upload, X, Loader2, CheckCircle } from "lucide-react";
 
 type FilterType = "all" | ContentType;
@@ -98,39 +99,32 @@ export default function ContentPage() {
     setUploadProgress(0);
     setUploadError("");
     try {
-      // Step 1: Get presigned upload URL from server (tiny request)
-      const presignRes = await fetch("/api/content/presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: selectedFile.name }),
-      });
-      const presignData = await presignRes.json();
-      if (!presignRes.ok) throw new Error(presignData.error || "Failed to get upload URL");
+      const BUCKET = "content-assets";
+      const safeName = `${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
-      // Step 2: Upload file DIRECTLY to Supabase Storage (bypasses Next.js 4MB limit)
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", presignData.signedUrl);
-        xhr.setRequestHeader("Content-Type", selectedFile.type);
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 90));
-        };
-        xhr.onload = () => (xhr.status < 300 ? resolve() : reject(new Error(`Storage error: ${xhr.status}`)));
-        xhr.onerror = () => reject(new Error("Network error during upload"));
-        xhr.send(selectedFile);
-      });
+      // Step 1: Upload directly to Supabase Storage from browser (no Next.js size limit)
+      const { error: storageError } = await supabaseBrowser.storage
+        .from(BUCKET)
+        .upload(safeName, selectedFile, {
+          contentType: selectedFile.type,
+          upsert: false,
+        });
 
-      setUploadProgress(95);
+      if (storageError) throw new Error(storageError.message);
 
-      // Step 3: Save metadata to DB
+      setUploadProgress(90);
+
+      const { data: publicData } = supabaseBrowser.storage.from(BUCKET).getPublicUrl(safeName);
+
+      // Step 2: Save metadata to DB (small JSON request, no file)
       const metaRes = await fetch("/api/content/save-metadata", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title || selectedFile.name,
           type: detectType(selectedFile.type),
-          url: presignData.publicUrl,
-          storage_path: presignData.path,
+          url: publicData.publicUrl,
+          storage_path: safeName,
           size_bytes: selectedFile.size,
           tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
         }),
