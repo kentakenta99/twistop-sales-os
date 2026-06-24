@@ -14,14 +14,16 @@ import {
   Globe,
   BarChart3,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/",          label: "Dashboard",      icon: LayoutDashboard, accent: false },
-  { href: "/pipeline",  label: "Pipeline",        icon: Columns2,        accent: false },
-  { href: "/leads",     label: "Leads",           icon: Users,           accent: false },
-  { href: "/generate",  label: "Lead Generator",  icon: Sparkles,        accent: true  },
-  { href: "/content",   label: "Content Store",   icon: FolderOpen,      accent: false },
+  { href: "/",          label: "Dashboard",       icon: LayoutDashboard, accent: false },
+  { href: "/pipeline",  label: "Pipeline",         icon: Columns2,        accent: false },
+  { href: "/leads",     label: "Leads",            icon: Users,           accent: false },
+  { href: "/generate",  label: "Lead Generator",   icon: Sparkles,        accent: true  },
+  { href: "/outreach",  label: "Outreach Planner", icon: Send,            accent: false },
+  { href: "/content",   label: "Content Store",    icon: FolderOpen,      accent: false },
 ];
 
 const comingSoon = [
