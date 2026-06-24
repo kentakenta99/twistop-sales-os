@@ -55,6 +55,7 @@ export default function ContentPage() {
   const [uploaded, setUploaded] = useState<UploadedAsset[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadDone, setUploadDone] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [title, setTitle] = useState("");
@@ -74,6 +75,7 @@ export default function ContentPage() {
     setShowModal(true);
     setUploadDone(false);
     setUploadError("");
+    setUploadProgress(0);
     setTitle("");
     setTags("");
     setSelectedFile(null);
@@ -83,21 +85,61 @@ export default function ContentPage() {
     setShowModal(false);
   }
 
+  function detectType(mime: string): "video" | "pdf" | "image" | "gif" {
+    if (mime === "application/pdf") return "pdf";
+    if (mime === "image/gif") return "gif";
+    if (mime.startsWith("video/")) return "video";
+    return "image";
+  }
+
   async function handleUpload() {
     if (!selectedFile) return;
     setUploading(true);
+    setUploadProgress(0);
     setUploadError("");
     try {
-      const form = new FormData();
-      form.append("file", selectedFile);
-      form.append("title", title || selectedFile.name);
-      form.append("tags", tags);
+      // Step 1: Get presigned upload URL from server (tiny request)
+      const presignRes = await fetch("/api/content/presign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: selectedFile.name }),
+      });
+      const presignData = await presignRes.json();
+      if (!presignRes.ok) throw new Error(presignData.error || "Failed to get upload URL");
 
-      const res = await fetch("/api/content/upload", { method: "POST", body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
+      // Step 2: Upload file DIRECTLY to Supabase Storage (bypasses Next.js 4MB limit)
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", presignData.signedUrl);
+        xhr.setRequestHeader("Content-Type", selectedFile.type);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 90));
+        };
+        xhr.onload = () => (xhr.status < 300 ? resolve() : reject(new Error(`Storage error: ${xhr.status}`)));
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.send(selectedFile);
+      });
 
-      setUploaded((prev) => [data.asset, ...prev]);
+      setUploadProgress(95);
+
+      // Step 3: Save metadata to DB
+      const metaRes = await fetch("/api/content/save-metadata", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title || selectedFile.name,
+          type: detectType(selectedFile.type),
+          url: presignData.publicUrl,
+          storage_path: presignData.path,
+          size_bytes: selectedFile.size,
+          tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+        }),
+      });
+      const metaData = await metaRes.json();
+      if (!metaRes.ok) throw new Error(metaData.error || "Failed to save metadata");
+
+      setUploadProgress(100);
+      setUploaded((prev) => [metaData.asset, ...prev]);
       setUploadDone(true);
       setTimeout(() => setShowModal(false), 1200);
     } catch (e) {
@@ -305,6 +347,20 @@ export default function ContentPage() {
                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400/50"
                 />
               </div>
+
+              {uploading && uploadProgress > 0 && (
+                <div>
+                  <div className="flex justify-between text-xs text-slate-500 mb-1">
+                    <span>Uploading…</span><span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5">
+                    <div
+                      className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {uploadError && (
                 <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
