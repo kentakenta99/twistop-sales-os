@@ -43,8 +43,10 @@ export default function OutreachPage() {
   const [allLeads, setAllLeads] = useState<Prospect[]>([]);
   const [plans, setPlans] = useState<OutreachPlan[]>([]);
   const [generating, setGenerating] = useState<Set<string>>(new Set());
+  const [sending, setSending] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [error, setError] = useState<Record<string, string>>({});
+  const [sendResult, setSendResult] = useState<Record<string, "ok" | "err">>({});
 
   useEffect(() => {
     setAllLeads([...mockProspects, ...getGeneratedLeads()]);
@@ -104,6 +106,45 @@ export default function OutreachPage() {
   function approvePlan(leadId: string) {
     updatePlanStatus(leadId, "approved");
     refreshPlans();
+  }
+
+  async function sendEmails(plan: OutreachPlan) {
+    setSending((prev) => new Set(prev).add(plan.leadId));
+    setSendResult((prev) => ({ ...prev, [plan.leadId]: "ok" }));
+    try {
+      // Send all 3 steps; Day 0 goes immediately, others are informational for now
+      const day0 = plan.steps.find((s) => s.day === 0);
+      if (!day0) throw new Error("No Day 0 email in plan");
+
+      const res = await fetch("/api/outreach/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: plan.email,
+          subject: day0.subject,
+          body: day0.body,
+          company: plan.company,
+          contact: plan.contact,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Send failed");
+      updatePlanStatus(plan.leadId, "sent");
+      setSendResult((prev) => ({ ...prev, [plan.leadId]: "ok" }));
+      refreshPlans();
+    } catch (e) {
+      setSendResult((prev) => ({ ...prev, [plan.leadId]: "err" }));
+      setError((prev) => ({
+        ...prev,
+        [plan.leadId]: e instanceof Error ? e.message : "Send failed",
+      }));
+    } finally {
+      setSending((prev) => {
+        const next = new Set(prev);
+        next.delete(plan.leadId);
+        return next;
+      });
+    }
   }
 
   function removePlan(leadId: string) {
@@ -288,14 +329,27 @@ export default function OutreachPage() {
                   {plan.status === "approved" && (
                     <div className="px-5 py-3 bg-amber-50/60 flex items-center justify-between">
                       <span className="text-xs text-amber-700 font-semibold">
-                        ✓ Approved — ready to send via Resend
+                        ✓ Approved — Day 0 email ready to send
                       </span>
                       <button
-                        onClick={() => { updatePlanStatus(lead.id, "sent"); refreshPlans(); }}
-                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-green-500 hover:bg-green-600 px-3 py-1.5 rounded-lg transition-colors"
+                        onClick={() => sendEmails(plan)}
+                        disabled={sending.has(lead.id)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-green-500 hover:bg-green-600 disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors"
                       >
-                        <Send size={11} /> Mark as Sent
+                        {sending.has(lead.id) ? (
+                          <><Loader2 size={11} className="animate-spin" /> Sending…</>
+                        ) : (
+                          <><Send size={11} /> Send via Resend</>
+                        )}
                       </button>
+                    </div>
+                  )}
+                  {plan.status === "sent" && (
+                    <div className="px-5 py-3 bg-green-50/60 flex items-center gap-2">
+                      <CheckCircle size={13} className="text-green-500" />
+                      <span className="text-xs text-green-700 font-semibold">
+                        Day 0 sent — follow-ups scheduled at Day 3 &amp; Day 7
+                      </span>
                     </div>
                   )}
                 </div>
