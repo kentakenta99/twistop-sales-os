@@ -13,6 +13,7 @@ import {
   FileText,
   Globe,
   BarChart3,
+  UsersRound,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/generate",  label: "Lead Generator",   icon: Sparkles,        accent: true  },
   { href: "/outreach",  label: "Outreach Planner", icon: Send,            accent: false },
   { href: "/content",   label: "Content Store",    icon: FolderOpen,      accent: false },
+  { href: "/team",      label: "Team",             icon: UsersRound,      accent: false },
 ];
 
 const comingSoon = [

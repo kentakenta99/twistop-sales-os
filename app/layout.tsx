@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
+import AppInit from "@/components/AppInit";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Sidebar />
           <main className="flex-1 overflow-auto">{children}</main>
         </div>
+        <AppInit />
       </body>
     </html>
   );
