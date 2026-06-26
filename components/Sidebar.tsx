@@ -57,7 +57,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             priority
           />
           <div className="text-slate-500 text-[10px] font-semibold tracking-widest uppercase mt-1">
-            Sales OS
+            Axis
           </div>
         </div>
         {onClose && (

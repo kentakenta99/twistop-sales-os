@@ -40,7 +40,7 @@ export default function SidebarWrapper({ children }: { children: React.ReactNode
             <Menu size={20} />
           </button>
           <span className="ml-3 text-slate-400 text-xs font-semibold tracking-widest uppercase">
-            Sales OS
+            Axis
           </span>
         </div>
         {children}

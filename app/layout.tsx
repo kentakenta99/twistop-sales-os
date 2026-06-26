@@ -7,7 +7,7 @@ import AppInit from "@/components/AppInit";
 const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TwisTop Sales OS",
+  title: "TwisTop Axis",
   description: "Global Sales Operations — spirit + mixers",
 };
 
