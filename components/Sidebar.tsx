@@ -14,6 +14,7 @@ import {
   Globe,
   BarChart3,
   UsersRound,
+  BookUser,
   X,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/",          label: "Dashboard",       icon: LayoutDashboard, accent: false },
   { href: "/pipeline",  label: "Pipeline",         icon: Columns2,        accent: false },
   { href: "/leads",     label: "Leads",            icon: Users,           accent: false },
+  { href: "/crm",       label: "CRM",              icon: BookUser,        accent: false },
   { href: "/generate",  label: "Lead Generator",   icon: Sparkles,        accent: true  },
   { href: "/outreach",  label: "Outreach Planner", icon: Send,            accent: false },
   { href: "/content",   label: "Content Store",    icon: FolderOpen,      accent: false },

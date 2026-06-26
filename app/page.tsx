@@ -42,43 +42,19 @@ export default function DashboardPage() {
       </div>
 
       {/* Hero banner */}
-      <div className="relative rounded-2xl overflow-hidden mb-8 bg-slate-900 h-44 flex items-center">
-        {/* Left product image */}
-        <div className="absolute left-0 top-0 h-full w-52 overflow-hidden">
-          <Image
-            src="/combo-wilkinson.jpg"
-            alt="Nikka × Wilkinson TANSAN"
-            fill
-            className="object-cover object-center opacity-80"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900" />
-        </div>
-
-        {/* Right product image */}
-        <div className="absolute right-0 top-0 h-full w-52 overflow-hidden">
-          <Image
-            src="/combo-monster.jpg"
-            alt="Grey Goose × Monster Energy"
-            fill
-            className="object-cover object-center opacity-80"
-          />
-          <div className="absolute inset-0 bg-gradient-to-l from-transparent to-slate-900" />
-        </div>
-
-        {/* Center content */}
-        <div className="relative z-10 w-full flex flex-col items-center justify-center text-center px-4">
-          <Image
-            src="/logo.jpg"
-            alt="TwisTop"
-            width={180}
-            height={75}
-            className="mb-2"
-            style={{ filter: "invert(1) brightness(0.95)" }}
-          />
-          <p className="text-slate-400 text-xs tracking-widest uppercase">
-            Global Sales Operations · Axis A + B
-          </p>
-        </div>
+      <div className="rounded-2xl overflow-hidden mb-8 bg-black flex flex-col items-center justify-center py-10 px-6">
+        <Image
+          src="/logo.jpg"
+          alt="TwisTop"
+          width={260}
+          height={108}
+          className="w-48 sm:w-64"
+          style={{ filter: "invert(1) brightness(0.95)" }}
+          priority
+        />
+        <p className="text-slate-500 text-[11px] tracking-widest uppercase mt-3">
+          Global Sales Operations · Axis A + B
+        </p>
       </div>
 
       {/* KPI Cards */}
