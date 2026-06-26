@@ -14,6 +14,7 @@ import {
   Globe,
   BarChart3,
   UsersRound,
+  X,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -34,25 +35,40 @@ const comingSoon = [
   { label: "Analytics", icon: BarChart3 },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
 
   return (
     <div className="w-60 bg-slate-900 flex flex-col h-full flex-shrink-0">
       {/* Logo */}
-      <div className="px-4 py-4 border-b border-slate-700/60">
-        <Image
-          src="/logo.jpg"
-          alt="TwisTop"
-          width={160}
-          height={66}
-          className="w-full"
-          style={{ filter: "invert(1) brightness(0.95)" }}
-          priority
-        />
-        <div className="text-slate-500 text-[10px] font-semibold tracking-widest uppercase mt-1">
-          Sales OS
+      <div className="px-4 py-4 border-b border-slate-700/60 flex items-start justify-between">
+        <div className="flex-1">
+          <Image
+            src="/logo.jpg"
+            alt="TwisTop"
+            width={160}
+            height={66}
+            className="w-full"
+            style={{ filter: "invert(1) brightness(0.95)" }}
+            priority
+          />
+          <div className="text-slate-500 text-[10px] font-semibold tracking-widest uppercase mt-1">
+            Sales OS
+          </div>
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="md:hidden ml-2 mt-1 p-1 rounded text-slate-500 hover:text-white hover:bg-slate-800 transition-colors flex-shrink-0"
+            aria-label="メニューを閉じる"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       {/* Primary nav */}
