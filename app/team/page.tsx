@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Plus, Pin, Trash2, CheckCircle2, Circle, Clock, AlertCircle, X, Smile,
-  ChevronLeft, ChevronRight, Star,
+  ChevronLeft, ChevronRight, Star, Pencil,
 } from "lucide-react";
 import { getCurrentUser, KNOWN_USERS, type AppUser } from "@/lib/currentUser";
 
@@ -133,6 +133,17 @@ export default function TeamPage() {
   const [evStart, setEvStart] = useState("");
   const [evEnd, setEvEnd] = useState("");
   const [savingEvent, setSavingEvent] = useState(false);
+
+  // Event edit
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editType, setEditType] = useState<EventType>("general");
+  const [editDesc, setEditDesc] = useState("");
+  const [editAllDay, setEditAllDay] = useState(true);
+  const [editStart, setEditStart] = useState("");
+  const [editEnd, setEditEnd] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Task form
   const [showTaskForm, setShowTaskForm] = useState(false);
@@ -307,6 +318,46 @@ export default function TeamPage() {
   async function deleteEvent(id: string) {
     await fetch(`/api/team/calendar/${id}`, { method: "DELETE" });
     setEvents((prev) => prev.filter((e) => e.id !== id));
+    if (selectedDay) {
+      const remaining = (eventsByDate[selectedDay] ?? []).filter((e) => e.id !== id);
+      if (remaining.length === 0) setSelectedDay(null);
+    }
+  }
+
+  function openEdit(ev: CalendarEvent) {
+    setEditingEvent(ev);
+    setEditTitle(ev.title);
+    setEditDate(ev.event_date);
+    setEditType(ev.event_type);
+    setEditDesc(ev.description ?? "");
+    setEditAllDay(ev.all_day);
+    setEditStart(ev.start_time ?? "");
+    setEditEnd(ev.end_time ?? "");
+    setSavingEdit(false);
+  }
+
+  async function updateEvent() {
+    if (!editingEvent || !editTitle.trim() || !editDate) return;
+    setSavingEdit(true);
+    const res = await fetch(`/api/team/calendar/${editingEvent.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: editTitle.trim(),
+        event_date: editDate,
+        event_type: editType,
+        description: editDesc.trim() || null,
+        all_day: editAllDay,
+        start_time: !editAllDay && editStart ? editStart : null,
+        end_time: !editAllDay && editEnd ? editEnd : null,
+      }),
+    });
+    const data = await res.json();
+    if (data.event) {
+      setEvents((prev) => prev.map((e) => e.id === editingEvent.id ? data.event : e));
+    }
+    setSavingEdit(false);
+    setEditingEvent(null);
   }
 
   // Derived
@@ -523,9 +574,22 @@ export default function TeamPage() {
                       <p className="text-xs opacity-60 mt-0.5">{ev.start_time}{ev.end_time ? ` – ${ev.end_time}` : ""}</p>
                     )}
                   </div>
-                  <button onClick={() => deleteEvent(ev.id)} className="flex-shrink-0 p-1 rounded hover:bg-black/10 transition-colors text-current opacity-60 hover:opacity-100">
-                    <Trash2 size={13} />
-                  </button>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => { setSelectedDay(null); openEdit(ev); }}
+                      className="p-1 rounded hover:bg-black/10 transition-colors text-current opacity-60 hover:opacity-100"
+                      title="Edit"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={() => deleteEvent(ev.id)}
+                      className="p-1 rounded hover:bg-black/10 transition-colors text-current opacity-60 hover:opacity-100"
+                      title="Delete"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -534,6 +598,55 @@ export default function TeamPage() {
               className="w-full flex items-center justify-center gap-2 border border-dashed border-slate-300 rounded-lg py-2.5 text-sm text-slate-500 hover:border-amber-400 hover:text-amber-600 transition-colors mt-1"
             >
               <Plus size={14} /> Add Event on This Day
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Event edit modal ── */}
+      {editingEvent && (
+        <Modal title="Edit Event" onClose={() => setEditingEvent(null)}>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Title *</label>
+              <input autoFocus value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400/50" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Date *</label>
+                <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Type *</label>
+                <select value={editType} onChange={(e) => setEditType(e.target.value as EventType)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none">
+                  {(Object.keys(EVENT_META) as EventType[]).map((k) => (
+                    <option key={k} value={k}>{EVENT_META[k].label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Description</label>
+              <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} rows={2} placeholder="Optional notes…" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400/50 resize-none" />
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" checked={editAllDay} onChange={(e) => setEditAllDay(e.target.checked)} className="rounded" />
+              <span className="text-sm text-slate-600">All day</span>
+            </label>
+            {!editAllDay && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Start</label>
+                  <input type="time" value={editStart} onChange={(e) => setEditStart(e.target.value)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">End</label>
+                  <input type="time" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none" />
+                </div>
+              </div>
+            )}
+            <button onClick={updateEvent} disabled={!editTitle.trim() || !editDate || savingEdit} className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm transition-colors">
+              {savingEdit ? "Saving…" : "Save Changes"}
             </button>
           </div>
         </Modal>
