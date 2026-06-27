@@ -15,6 +15,7 @@ import {
   BarChart3,
   UsersRound,
   BookUser,
+  Settings,
   X,
 } from "lucide-react";
 
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/outreach",  label: "Outreach Planner", icon: Send,            accent: false },
   { href: "/content",   label: "Content Store",    icon: FolderOpen,      accent: false },
   { href: "/team",      label: "Team",             icon: UsersRound,      accent: false },
+  { href: "/settings",  label: "Settings",         icon: Settings,        accent: false },
 ];
 
 const comingSoon = [

@@ -10,8 +10,8 @@ export type AppUser = {
 };
 
 export const KNOWN_USERS: AppUser[] = [
-  { id: "00000000-0000-0000-0000-000000000001", name: "Kenta",  email: "kentakenta99@gmail.com", avatarColor: "#f59e0b", role: "admin" },
-  { id: "00000000-0000-0000-0000-000000000002", name: "Damon",  email: "damon@twistop.com",       avatarColor: "#3b82f6", role: "admin" },
+  { id: "00000000-0000-0000-0000-000000000001", name: "Kenta",  email: "kenta_yagi@wishbone.tokyo", avatarColor: "#f59e0b", role: "admin" },
+  { id: "00000000-0000-0000-0000-000000000002", name: "Damon",  email: "damonj@acuver.com",         avatarColor: "#3b82f6", role: "admin" },
 ];
 
 export function getCurrentUserId(): string | null {

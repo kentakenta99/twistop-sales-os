@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
+import { notifyAll } from "@/lib/sendNotification";
+import { KNOWN_USERS } from "@/lib/currentUser";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -43,5 +45,15 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const creator = KNOWN_USERS.find((u) => u.id === created_by);
+  const timeLine = !all_day && start_time ? `\nTime: ${start_time}${end_time ? ` – ${end_time}` : ""}` : "";
+  notifyAll({
+    module: "calendar",
+    subject: `[TwisTop Axis] New event: "${title}" on ${event_date}`,
+    body: `A new calendar event has been added.\n\nEvent: ${title}\nDate: ${event_date}${timeLine}${description ? `\n\n${description}` : ""}\nAdded by: ${creator?.name ?? "Team"}`,
+    excludeUserId: created_by ?? undefined,
+  }).catch(() => {});
+
   return NextResponse.json({ event: data });
 }
