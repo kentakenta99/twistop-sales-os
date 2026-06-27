@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { contentAssets, type ContentType } from "@/lib/mockData";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
-import { Mail, Share2, Download, Upload, X, Loader2, CheckCircle, Trash2 } from "lucide-react";
+import { Mail, Share2, Download, Upload, X, Loader2, CheckCircle, Trash2, Play } from "lucide-react";
 
 type FilterType = "all" | ContentType;
 
@@ -56,6 +56,9 @@ export default function ContentPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [uploaded, setUploaded] = useState<UploadedAsset[]>([]);
   const [deleting, setDeleting] = useState<Set<string>>(new Set());
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<"video" | "image" | "gif" | null>(null);
+  const [previewTitle, setPreviewTitle] = useState<string>("");
   const [showModal, setShowModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -217,19 +220,34 @@ export default function ContentPage() {
             {/* Thumbnail */}
             <div className={`h-36 flex items-center justify-center text-5xl relative overflow-hidden ${thumbnailBg[asset.type as ContentType]} border-b border-slate-100`}>
               {"isMock" in asset && !asset.isMock && (asset.type === "image" || asset.type === "gif") && "url" in asset ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={asset.url as string}
-                  alt={asset.title}
-                  className="w-full h-full object-cover"
-                />
+                <button
+                  className="w-full h-full"
+                  onClick={() => { setPreviewUrl(asset.url as string); setPreviewType(asset.type as "image" | "gif"); setPreviewTitle(asset.title); }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={asset.url as string}
+                    alt={asset.title}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
               ) : "isMock" in asset && !asset.isMock && asset.type === "video" && "url" in asset ? (
-                <video
-                  src={asset.url as string}
-                  className="w-full h-full object-cover"
-                  muted
-                  preload="metadata"
-                />
+                <>
+                  <video
+                    src={asset.url as string}
+                    className="w-full h-full object-cover"
+                    muted
+                    preload="metadata"
+                  />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPreviewUrl(asset.url as string); setPreviewType("video"); setPreviewTitle(asset.title); }}
+                    className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <div className="bg-white/90 rounded-full p-3 shadow-lg">
+                      <Play size={20} className="text-slate-900 fill-slate-900" />
+                    </div>
+                  </button>
+                </>
               ) : "thumbnail" in asset ? (
                 asset.thumbnail
               ) : (
@@ -312,6 +330,44 @@ export default function ContentPage() {
 
       {filtered.length === 0 && (
         <div className="text-center py-20 text-slate-400 text-sm">No assets in this category.</div>
+      )}
+
+      {/* Preview Modal */}
+      {previewUrl && previewType && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white font-semibold text-sm truncate">{previewTitle}</p>
+              <button
+                onClick={() => setPreviewUrl(null)}
+                className="text-white/70 hover:text-white ml-4 flex-shrink-0"
+              >
+                <X size={22} />
+              </button>
+            </div>
+            {previewType === "video" ? (
+              <video
+                src={previewUrl}
+                controls
+                autoPlay
+                className="w-full max-h-[80vh] rounded-xl bg-black"
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={previewUrl}
+                alt={previewTitle}
+                className="w-full max-h-[80vh] object-contain rounded-xl"
+              />
+            )}
+          </div>
+        </div>
       )}
 
       {/* Upload Modal */}
