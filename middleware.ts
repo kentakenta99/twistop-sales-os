@@ -27,6 +27,9 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth/callback");
 
+  // 開発環境ではAuth不要（プレビュー確認用）
+  if (process.env.NODE_ENV === "development") return supabaseResponse;
+
   if (!user && !isPublic) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";

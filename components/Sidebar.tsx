@@ -19,6 +19,7 @@ import {
   Settings,
   X,
   LogOut,
+  Clapperboard,
 } from "lucide-react";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
 import { getCurrentUser } from "@/lib/currentUser";
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/crm",       label: "CRM",              icon: BookUser,        accent: false },
   { href: "/generate",  label: "Lead Generator",   icon: Sparkles,        accent: true  },
   { href: "/outreach",  label: "Outreach Planner", icon: Send,            accent: false },
+  { href: "/studio",    label: "Content Studio",   icon: Clapperboard,    accent: true  },
   { href: "/content",   label: "Content Store",    icon: FolderOpen,      accent: false },
   { href: "/team",      label: "Team",             icon: UsersRound,      accent: false },
   { href: "/settings",  label: "Settings",         icon: Settings,        accent: false },
