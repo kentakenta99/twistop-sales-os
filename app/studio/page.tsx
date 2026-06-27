@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Clapperboard, Sparkles, Copy, Check, RefreshCw,
   Video, TrendingUp, ExternalLink, Trash2, ChevronDown, ChevronUp,
-  Play, Globe, Briefcase, X,
+  Play, Globe, Briefcase, X, Archive,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/currentUser";
 
@@ -17,6 +17,7 @@ type Duration = "short" | "medium" | "long";
 
 interface GeneratedContent {
   script: string;
+  heygen_input?: string;
   hook: string;
   captions: Partial<Record<Platform, string>>;
   hashtags: { core: string[]; trend: string[]; niche: string[] };
@@ -36,7 +37,9 @@ interface ContentJob {
   key_message: string;
   script: string;
   heygen_status: string;
+  heygen_video_id: string | null;
   video_url: string | null;
+  thumbnail_url: string | null;
   posted_platforms: Platform[];
   views: number;
   likes: number;
@@ -197,15 +200,51 @@ export default function StudioPage() {
   const [engLikes, setEngLikes] = useState(0);
   const [engFollows, setEngFollows] = useState(0);
 
+  // Content Store
+  const [storingJobs, setStoringJobs] = useState<Set<string>>(new Set());
+  const [storedJobs, setStoredJobs] = useState<Set<string>>(new Set());
+
   // Active section tab
   const [tab, setTab] = useState<"create" | "jobs">("create");
+
+  async function pollProcessingJobs(jobList: ContentJob[]) {
+    const processing = jobList.filter(
+      j => j.heygen_status === "processing" && j.heygen_video_id
+    );
+    await Promise.all(processing.map(async job => {
+      const res = await fetch(`/api/studio/heygen?action=status&video_id=${job.heygen_video_id}`);
+      const data = await res.json();
+      const status = data?.data?.status;
+      if (status === "completed" || status === "failed") {
+        await fetch(`/api/studio/jobs/${job.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            heygen_status: status,
+            video_url: data?.data?.video_url ?? null,
+            thumbnail_url: data?.data?.thumbnail_url ?? null,
+          }),
+        });
+      }
+    }));
+  }
 
   const loadJobs = useCallback(async () => {
     setLoadingJobs(true);
     const res = await fetch("/api/studio/jobs");
     const data = await res.json();
-    if (data.jobs) setJobs(data.jobs);
+    const jobList: ContentJob[] = data.jobs ?? [];
+    // processingジョブがあれば自動でステータス更新
+    if (jobList.some(j => j.heygen_status === "processing" && j.heygen_video_id)) {
+      await pollProcessingJobs(jobList);
+      const res2 = await fetch("/api/studio/jobs");
+      const data2 = await res2.json();
+      setJobs(data2.jobs ?? []);
+    } else {
+      setJobs(jobList);
+    }
     setLoadingJobs(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { loadJobs(); }, [loadJobs]);
@@ -286,7 +325,7 @@ export default function StudioPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        script: generated.script,
+        script: generated.heygen_input || generated.script,
         avatarId,
         voiceId,
         aspectRatio: platforms.some(p => p === "youtube") ? "16:9" : "9:16",
@@ -309,6 +348,26 @@ export default function StudioPage() {
   async function handleDeleteJob(id: string) {
     await fetch(`/api/studio/jobs/${id}`, { method: "DELETE" });
     setJobs(prev => prev.filter(j => j.id !== id));
+  }
+
+  async function handleSaveToStore(job: ContentJob) {
+    if (!job.video_url) return;
+    setStoringJobs(prev => new Set(prev).add(job.id));
+    const title = job.content_type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+      + (job.platforms.length ? ` — ${job.platforms.join(", ")}` : "");
+    await fetch("/api/content/save-metadata", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        type: "video",
+        url: job.video_url,
+        thumbnail_url: job.thumbnail_url ?? null,
+        tags: [job.content_type, ...job.platforms],
+      }),
+    });
+    setStoringJobs(prev => { const s = new Set(prev); s.delete(job.id); return s; });
+    setStoredJobs(prev => new Set(prev).add(job.id));
   }
 
   async function handleSaveEngagement(jobId: string) {
@@ -700,8 +759,22 @@ export default function StudioPage() {
                       })}
                     </div>
 
-                    {/* Expand / Delete */}
+                    {/* Save to Store / Expand / Delete */}
                     <div className="flex gap-1 flex-shrink-0">
+                      {job.video_url && (
+                        <button
+                          onClick={() => handleSaveToStore(job)}
+                          disabled={storingJobs.has(job.id) || storedJobs.has(job.id)}
+                          className="p-1.5 rounded-lg text-amber-500 hover:text-amber-700 hover:bg-amber-50 disabled:opacity-40 transition-colors"
+                          title="Save to Content Store"
+                        >
+                          {storedJobs.has(job.id)
+                            ? <Check size={14} className="text-green-500" />
+                            : storingJobs.has(job.id)
+                              ? <RefreshCw size={14} className="animate-spin" />
+                              : <Archive size={14} />}
+                        </button>
+                      )}
                       <button
                         onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"

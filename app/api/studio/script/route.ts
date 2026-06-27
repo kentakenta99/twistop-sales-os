@@ -67,7 +67,8 @@ TARGET PLATFORMS:
 
 DELIVER exactly this JSON structure (no markdown, no extra text):
 {
-  "script": "Full video script with [VISUAL: description] markers, [PAUSE], [CTA], etc. Ready to send to HeyGen avatar. Natural spoken language.",
+  "script": "Full production script including [VISUAL: description] markers, [PAUSE], stage directions, and SPEAKER lines — for the human director's reference.",
+  "heygen_input": "ONLY the spoken words for the HeyGen avatar to read aloud. No stage directions, no [VISUAL:] tags, no [PAUSE], no brackets of any kind. Pure conversational spoken text, natural rhythm, as if talking to camera. This is sent directly to text-to-speech synthesis.",
   "hook": "The opening 3-5 seconds. Must stop the scroll.",
   "captions": {
     ${params.platforms.map(p => `"${p}": "Platform-optimized caption. Include native platform formatting (line breaks, emojis where appropriate). 150-300 chars for short-form, up to 500 for YouTube/LinkedIn."`).join(",\n    ")}
