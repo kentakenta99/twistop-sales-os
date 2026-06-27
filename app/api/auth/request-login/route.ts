@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     type: "magiclink",
     email: normalized,
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://twistop-sales-os.vercel.app"}/auth/callback`,
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://twistop-sales-os.vercel.app"}/auth/confirm`,
     },
   });
 
