@@ -317,11 +317,15 @@ export default function TeamPage() {
 
   async function deleteEvent(id: string) {
     await fetch(`/api/team/calendar/${id}`, { method: "DELETE" });
-    setEvents((prev) => prev.filter((e) => e.id !== id));
-    if (selectedDay) {
-      const remaining = (eventsByDate[selectedDay] ?? []).filter((e) => e.id !== id);
-      if (remaining.length === 0) setSelectedDay(null);
-    }
+    setEvents((prev) => {
+      const next = prev.filter((e) => e.id !== id);
+      // close day modal if no events remain on that day
+      if (selectedDay) {
+        const stillHas = next.some((e) => e.event_date === selectedDay);
+        if (!stillHas) setSelectedDay(null);
+      }
+      return next;
+    });
   }
 
   function openEdit(ev: CalendarEvent) {
@@ -771,7 +775,15 @@ function TasksView({ tasks, onStatusChange, onDelete, me }: {
   me: AppUser | null;
 }) {
   if (tasks.length === 0) {
-    return <div className="text-center py-20 text-slate-400 text-sm">No tasks yet. Create one to get started.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+          <CheckCircle2 size={26} className="text-slate-300" />
+        </div>
+        <p className="text-slate-700 font-semibold text-sm">No tasks yet</p>
+        <p className="text-slate-400 text-xs mt-1">Hit "+ New Task" to create the first one.</p>
+      </div>
+    );
   }
   return (
     <div className="grid grid-cols-3 gap-5">
@@ -813,7 +825,7 @@ function TaskCard({ task, onStatusChange, onDelete }: {
         <p className={`text-sm font-semibold flex-1 leading-snug ${task.status === "done" ? "line-through text-slate-400" : "text-slate-800"}`}>{task.title}</p>
         <button onClick={() => onDelete(task.id)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-400 transition-all flex-shrink-0"><Trash2 size={12} /></button>
       </div>
-      {task.description && <p className="text-xs text-slate-400 ml-6 mb-2 leading-relaxed">{task.description}</p>}
+      {task.description && <p className="text-xs text-slate-400 ml-6 mb-2 leading-relaxed line-clamp-3">{task.description}</p>}
       <div className="flex items-center gap-2 ml-6">
         <span className={`flex items-center gap-1 text-[11px] font-semibold ${p.color}`}>{p.icon} {p.label}</span>
         {task.due_date && <span className="text-[11px] text-slate-400 ml-auto">due {new Date(task.due_date).toLocaleDateString("en", { month: "short", day: "numeric" })}</span>}

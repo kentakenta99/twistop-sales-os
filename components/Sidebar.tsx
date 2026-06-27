@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Columns2,
@@ -45,6 +46,7 @@ interface SidebarProps {
 
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   return (
     <div className="w-60 bg-slate-900 flex flex-col h-full flex-shrink-0">
@@ -94,13 +96,16 @@ export function Sidebar({ onClose }: SidebarProps) {
           </Link>
         ))}
 
-        <div className="pt-5 pb-1 px-3">
-          <div className="text-[10px] text-slate-600 uppercase tracking-widest font-semibold">
-            Coming Soon
-          </div>
-        </div>
+        <button
+          onClick={() => setShowComingSoon((v) => !v)}
+          className="flex items-center gap-1.5 pt-5 pb-1 px-3 w-full text-left group"
+        >
+          <span className="text-[10px] text-slate-600 uppercase tracking-widest font-semibold">Coming Soon</span>
+          <span className={`ml-1 text-slate-700 text-[10px] transition-transform ${showComingSoon ? "rotate-90" : ""}`}>▶</span>
+          <span className="ml-auto text-[10px] text-slate-700 bg-slate-800 px-1.5 py-0.5 rounded font-semibold">{comingSoon.length}</span>
+        </button>
 
-        {comingSoon.map(({ label, icon: Icon }) => (
+        {showComingSoon && comingSoon.map(({ label, icon: Icon }) => (
           <div
             key={label}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 cursor-not-allowed select-none"

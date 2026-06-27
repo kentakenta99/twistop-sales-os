@@ -187,8 +187,12 @@ export default function CRMPage() {
       {loading ? (
         <div className="text-center py-20 text-slate-400 text-sm">Loading…</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 text-slate-400 text-sm">
-          {search ? "No contacts match your search." : "No contacts yet. Add one to get started."}
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+            <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-slate-300" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+          </div>
+          <p className="text-slate-700 font-semibold text-sm">{search ? "No contacts match" : "No contacts yet"}</p>
+          <p className="text-slate-400 text-xs mt-1">{search ? "Try a different search term." : "Save contacts from Pipeline, or add manually."}</p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">

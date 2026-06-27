@@ -62,6 +62,7 @@ export default function PipelinePage() {
   const [crmTarget, setCrmTarget] = useState<Prospect | null>(null);
   const [crmSaving, setCrmSaving] = useState(false);
   const [crmDone, setCrmDone] = useState(false);
+  const [crmDuplicate, setCrmDuplicate] = useState(false);
 
   function openSchedule(p: Prospect) {
     setScheduleTarget(p);
@@ -75,6 +76,7 @@ export default function PipelinePage() {
     setCrmTarget(p);
     setCrmSaving(false);
     setCrmDone(false);
+    setCrmDuplicate(false);
   }
 
   async function saveToCalendar() {
@@ -101,7 +103,7 @@ export default function PipelinePage() {
     if (!crmTarget) return;
     setCrmSaving(true);
     const me = getCurrentUser();
-    await fetch("/api/crm/contacts", {
+    const res = await fetch("/api/crm/contacts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -114,8 +116,13 @@ export default function PipelinePage() {
         created_by: me?.id ?? null,
       }),
     });
+    const data = await res.json();
     setCrmSaving(false);
-    setCrmDone(true);
+    if (res.status === 409 || data.duplicate) {
+      setCrmDuplicate(true);
+    } else {
+      setCrmDone(true);
+    }
   }
 
   return (
@@ -255,6 +262,15 @@ export default function PipelinePage() {
                 <div className="flex flex-col items-center gap-3 py-4">
                   <CheckCircle size={36} className="text-green-500" />
                   <p className="text-slate-700 font-semibold text-center">Contact saved to CRM!</p>
+                  <button onClick={() => setCrmTarget(null)} className="text-sm text-slate-400 hover:text-slate-600">Close</button>
+                </div>
+              ) : crmDuplicate ? (
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                    <CheckCircle size={22} className="text-amber-500" />
+                  </div>
+                  <p className="text-slate-700 font-semibold text-center">Already in CRM</p>
+                  <p className="text-xs text-slate-400 text-center">This email address is already registered as a contact.</p>
                   <button onClick={() => setCrmTarget(null)} className="text-sm text-slate-400 hover:text-slate-600">Close</button>
                 </div>
               ) : (

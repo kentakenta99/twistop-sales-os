@@ -61,13 +61,14 @@ export async function notifyAssignee(opts: {
     .single();
   if (!prefs?.tasks_enabled) return;
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: `TwisTop Axis <${FROM}>`,
     to: [user.email],
     subject: opts.subject,
     html: buildHtml(opts.subject, opts.body),
     text: opts.body,
   });
+  if (error) console.error("[notifyAssignee] Resend error:", error);
 }
 
 export async function notifyAll(opts: {
@@ -83,11 +84,12 @@ export async function notifyAll(opts: {
     : users;
   if (targets.length === 0) return;
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: `TwisTop Axis <${FROM}>`,
     to: targets.map((u) => u.email),
     subject: opts.subject,
     html: buildHtml(opts.subject, opts.body),
     text: opts.body,
   });
+  if (error) console.error("[notifyAll] Resend error:", error);
 }

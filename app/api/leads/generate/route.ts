@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
     const withIds = leads.map((lead: Record<string, unknown>, i: number) => ({
       ...lead,
       id: `gen_${Date.now()}_${i}`,
+      stage: lead.stage || "Cold",
       lastContacted: "",
       notes: lead.reasoning || "",
       generated: true,

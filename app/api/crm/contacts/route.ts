@@ -29,6 +29,13 @@ export async function POST(req: NextRequest) {
     })
     .select()
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (error) {
+    // unique constraint violation on email
+    if (error.code === "23505") {
+      return NextResponse.json({ error: "A contact with this email already exists.", duplicate: true }, { status: 409 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json({ contact: data });
 }
