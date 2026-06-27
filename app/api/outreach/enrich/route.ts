@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Enrichlayer: LinkedIn URLからリードのプロフィールデータを取得
+// Enrichlayer v2: LinkedIn URLからリードのプロフィールデータを取得
 export async function POST(req: NextRequest) {
   const apiKey = process.env.ENRICHLAYER_API_KEY;
   if (!apiKey) {
@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "linkedin_url is required" }, { status: 400 });
   }
 
-  const url = new URL("https://enrichlayer.com/api/v1/linkedin/person");
-  url.searchParams.set("linkedin_url", linkedin_url);
+  const url = new URL("https://enrichlayer.com/api/v2/profile");
+  url.searchParams.set("profile_url", linkedin_url);
 
   const res = await fetch(url.toString(), {
     headers: {
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   if (!res.ok) {
     const err = await res.text();
-    return NextResponse.json({ error: `Enrichlayer error: ${err}` }, { status: res.status });
+    return NextResponse.json({ error: `Enrichlayer error (${res.status}): ${err}` }, { status: res.status });
   }
 
   const data = await res.json();
