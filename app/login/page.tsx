@@ -33,7 +33,7 @@ export default function LoginPage() {
     setSending(false);
 
     if (authError) {
-      setError(authError.message);
+      setError(authError.message || authError.status?.toString() || JSON.stringify(authError) || "Failed to send magic link");
     } else {
       setSent(true);
     }
