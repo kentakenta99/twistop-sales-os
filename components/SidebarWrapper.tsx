@@ -1,11 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 
 export default function SidebarWrapper({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+
+  // 認証ページはサイドバーなしで表示
+  if (pathname.startsWith("/login") || pathname.startsWith("/auth/")) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="flex h-full bg-slate-50">

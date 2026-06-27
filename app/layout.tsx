@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import SidebarWrapper from "@/components/SidebarWrapper";
 import AppInit from "@/components/AppInit";
+import { AuthSync } from "@/components/AuthSync";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${geist.className} h-full antialiased`}>
         <SidebarWrapper>{children}</SidebarWrapper>
         <AppInit />
+        <AuthSync />
       </body>
     </html>
   );

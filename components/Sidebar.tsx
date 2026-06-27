@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   LayoutDashboard,
@@ -18,7 +18,10 @@ import {
   BookUser,
   Settings,
   X,
+  LogOut,
 } from "lucide-react";
+import { createBrowserSupabase } from "@/lib/supabase-browser";
+import { getCurrentUser } from "@/lib/currentUser";
 
 import { cn } from "@/lib/utils";
 
@@ -46,7 +49,15 @@ interface SidebarProps {
 
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [showComingSoon, setShowComingSoon] = useState(false);
+  const currentUser = getCurrentUser();
+
+  async function handleLogout() {
+    const supabase = createBrowserSupabase();
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
   return (
     <div className="w-60 bg-slate-900 flex flex-col h-full flex-shrink-0">
@@ -120,9 +131,23 @@ export function Sidebar({ onClose }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-slate-700/60">
-        <div className="text-[10px] text-slate-600 font-medium">v0.1 · Demo mode</div>
-        <div className="text-[10px] text-slate-700 mt-0.5">Auth disabled — open access</div>
+      <div className="px-4 py-3 border-t border-slate-700/60">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            {currentUser?.name?.[0] ?? "?"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-slate-300 truncate">{currentUser?.name ?? "—"}</div>
+            <div className="text-[10px] text-slate-600 truncate">{currentUser?.email ?? ""}</div>
+          </div>
+          <button
+            onClick={handleLogout}
+            title="Sign out"
+            className="text-slate-600 hover:text-slate-300 transition-colors flex-shrink-0"
+          >
+            <LogOut size={14} />
+          </button>
+        </div>
       </div>
     </div>
   );

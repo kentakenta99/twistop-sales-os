@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { contentAssets, type ContentType } from "@/lib/mockData";
-import { supabaseBrowser } from "@/lib/supabase-browser";
+import { createBrowserSupabase } from "@/lib/supabase-browser";
 import { Mail, Share2, Download, Upload, X, Loader2, CheckCircle } from "lucide-react";
 
 type FilterType = "all" | ContentType;
@@ -103,7 +103,8 @@ export default function ContentPage() {
       const safeName = `${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
       // Step 1: Upload directly to Supabase Storage from browser (no Next.js size limit)
-      const { error: storageError } = await supabaseBrowser.storage
+      const supabase = createBrowserSupabase();
+      const { error: storageError } = await supabase.storage
         .from(BUCKET)
         .upload(safeName, selectedFile, {
           contentType: selectedFile.type,
@@ -114,7 +115,7 @@ export default function ContentPage() {
 
       setUploadProgress(90);
 
-      const { data: publicData } = supabaseBrowser.storage.from(BUCKET).getPublicUrl(safeName);
+      const { data: publicData } = supabase.storage.from(BUCKET).getPublicUrl(safeName);
 
       // Step 2: Save metadata to DB (small JSON request, no file)
       const metaRes = await fetch("/api/content/save-metadata", {
