@@ -27,14 +27,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth/callback");
 
-  // 開発環境ではAuth不要（プレビュー確認用）
-  if (process.env.NODE_ENV === "development") return supabaseResponse;
-
-  if (!user && !isPublic) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    return NextResponse.redirect(loginUrl);
-  }
+  // AUTH DISABLED: ログイン認証を一時停止中。後で有効化する場合は下記コメントアウトを解除。
+  // if (process.env.NODE_ENV !== "development" && !user && !isPublic) {
+  //   const loginUrl = request.nextUrl.clone();
+  //   loginUrl.pathname = "/login";
+  //   return NextResponse.redirect(loginUrl);
+  // }
 
   return supabaseResponse;
 }
