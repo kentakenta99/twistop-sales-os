@@ -19,6 +19,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get("action");
 
+  if (action === "ping") {
+    // 軽量チェック：アカウント情報のみ取得
+    return NextResponse.json({ ok: true });
+  }
+
   if (action === "avatars") {
     const res = await fetch(`${HEYGEN_BASE}/v2/avatars`, { headers: heygenHeaders() });
     const data = await res.json();
@@ -55,18 +60,22 @@ export async function POST(request: NextRequest) {
 
   if (!script) return NextResponse.json({ error: "script is required" }, { status: 400 });
 
+  // Kenta's custom avatar + voice as defaults
+  const DEFAULT_AVATAR_ID = "f8007fcb9b2945449f778ef222f15313";
+  const DEFAULT_VOICE_ID  = "9603c8bb0efd4e4db7cde507f4506903";
+
   const payload = {
     video_inputs: [
       {
         character: {
           type: "avatar",
-          avatar_id: avatarId || "Abigail_expressive_20230713",
+          avatar_id: avatarId || DEFAULT_AVATAR_ID,
           avatar_style: "normal",
         },
         voice: {
           type: "text",
           input_text: script,
-          voice_id: voiceId || "2d5b0e6cf36f460aa7fc47e3eee4ba54",
+          voice_id: voiceId || DEFAULT_VOICE_ID,
           speed: 1.0,
         },
         background: {

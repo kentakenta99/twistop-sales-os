@@ -91,6 +91,20 @@ const PLATFORM_LINKS: Partial<Record<Platform, string>> = {
   linkedin:      "https://www.linkedin.com/feed",
 };
 
+// Kenta のカスタムアバター・ボイスをデフォルトに
+const AVATAR_PRESETS = [
+  { id: "f8007fcb9b2945449f778ef222f15313", label: "Kenta (Custom)", badge: "⭐" },
+  { id: "Abigail_expressive_2024112501",    label: "Abigail",        badge: "" },
+  { id: "Abigail_standing_office_front",    label: "Abigail Office", badge: "" },
+];
+
+const VOICE_PRESETS = [
+  { id: "9603c8bb0efd4e4db7cde507f4506903", label: "Kenta (Custom)",  lang: "EN", badge: "⭐" },
+  { id: "662e1397965c484e8f65fa58c77effde", label: "Satoshi",          lang: "JA", badge: "" },
+  { id: "f9e16ac21b7d457c9c181ccc0337df34", label: "Zephlyn",          lang: "JA", badge: "" },
+  { id: "f8c69e517f424cafaecde32dde57096b", label: "Allison",          lang: "EN", badge: "" },
+];
+
 function TikTokIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
@@ -169,6 +183,8 @@ export default function StudioPage() {
   const [heygenKey, setHeygenKey] = useState(false);
   const [submittingHeyGen, setSubmittingHeyGen] = useState(false);
   const [heygenDone, setHeygenDone] = useState(false);
+  const [avatarId, setAvatarId] = useState("f8007fcb9b2945449f778ef222f15313");
+  const [voiceId,  setVoiceId]  = useState("9603c8bb0efd4e4db7cde507f4506903");
 
   // Jobs list
   const [jobs, setJobs] = useState<ContentJob[]>([]);
@@ -194,9 +210,9 @@ export default function StudioPage() {
 
   useEffect(() => { loadJobs(); }, [loadJobs]);
 
-  // Check if HeyGen is configured
+  // HeyGen設定確認（軽量ping）
   useEffect(() => {
-    fetch("/api/studio/heygen?action=avatars")
+    fetch("/api/studio/heygen?action=ping")
       .then(r => { if (r.ok) setHeygenKey(true); })
       .catch(() => {});
   }, []);
@@ -271,6 +287,8 @@ export default function StudioPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         script: generated.script,
+        avatarId,
+        voiceId,
         aspectRatio: platforms.some(p => p === "youtube") ? "16:9" : "9:16",
         language,
       }),
@@ -415,6 +433,42 @@ export default function StudioPage() {
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder-slate-300"
                   />
                 </div>
+
+                {/* HeyGen Avatar / Voice — Kenta custom as default */}
+                <div className={`mb-5 border rounded-xl p-3 space-y-3 ${heygenKey ? "border-violet-200 bg-violet-50" : "border-slate-200 bg-slate-50 opacity-60"}`}>
+                    <p className="text-[10px] font-bold text-violet-600 uppercase tracking-wide flex items-center gap-1">
+                      <Video size={11} /> HeyGen Settings
+                      {!heygenKey && <span className="ml-1 text-[9px] text-slate-400 font-normal normal-case">— API key loading…</span>}
+                    </p>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1.5">Avatar</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {AVATAR_PRESETS.map(a => (
+                          <button
+                            key={a.id}
+                            onClick={() => setAvatarId(a.id)}
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${avatarId === a.id ? "bg-violet-600 text-white border-violet-600" : "border-slate-200 text-slate-500 hover:border-violet-400"}`}
+                          >
+                            {a.badge && <span className="mr-0.5">{a.badge}</span>}{a.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1.5">Voice</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {VOICE_PRESETS.map(v => (
+                          <button
+                            key={v.id}
+                            onClick={() => setVoiceId(v.id)}
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${voiceId === v.id ? "bg-violet-600 text-white border-violet-600" : "border-slate-200 text-slate-500 hover:border-violet-400"}`}
+                          >
+                            {v.badge && <span className="mr-0.5">{v.badge}</span>}{v.label} <span className="text-[9px] opacity-60">{v.lang}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
 
                 <button
                   onClick={handleGenerate}
