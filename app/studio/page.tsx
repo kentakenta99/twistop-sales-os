@@ -96,9 +96,11 @@ const PLATFORM_LINKS: Partial<Record<Platform, string>> = {
 
 // Kenta のカスタムアバター・ボイスをデフォルトに
 const AVATAR_PRESETS = [
-  { id: "f8007fcb9b2945449f778ef222f15313", label: "Kenta (Custom)", badge: "⭐" },
-  { id: "Abigail_expressive_2024112501",    label: "Abigail",        badge: "" },
-  { id: "Abigail_standing_office_front",    label: "Abigail Office", badge: "" },
+  { id: "f8007fcb9b2945449f778ef222f15313", label: "Kenta",          badge: "⭐", preview: "https://files2.heygen.ai/avatar/v3/f8007fcb9b2945449f778ef222f15313/half/2.2/preview_target.webp" },
+  { id: "Abigail_expressive_2024112501",    label: "Abigail",        badge: "",   preview: "https://files2.heygen.ai/avatar/v3/1ad51ab9fee24ae88af067206e14a1d8_44250/preview_target.webp" },
+  { id: "Abigail_standing_office_front",    label: "Abigail Office", badge: "",   preview: "https://files2.heygen.ai/avatar/v3/463208b6cad140d2b263535826838e3a_39240/preview_target.webp" },
+  { id: "Aiko_public",                      label: "Aiko",           badge: "",   preview: "https://files2.heygen.ai/avatar/v3/1cc18796d5e44342b3247c1aa847bc8f_52250/preview_target.webp" },
+  { id: "Miyu_sitting_office_front",        label: "Miyu",           badge: "",   preview: "https://files2.heygen.ai/avatar/v3/845a1bdc03f84f15a668f9401797a661_37800/preview_talk_2.webp" },
 ];
 
 const VOICE_PRESETS = [
@@ -549,13 +551,25 @@ export default function StudioPage() {
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1.5">Avatar</label>
                       <div className="flex flex-wrap gap-1.5">
                         {AVATAR_PRESETS.map(a => (
-                          <button
-                            key={a.id}
-                            onClick={() => setAvatarId(a.id)}
-                            className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${avatarId === a.id ? "bg-violet-600 text-white border-violet-600" : "border-slate-200 text-slate-500 hover:border-violet-400"}`}
-                          >
-                            {a.badge && <span className="mr-0.5">{a.badge}</span>}{a.label}
-                          </button>
+                          <div key={a.id} className="relative group">
+                            <button
+                              onClick={() => setAvatarId(a.id)}
+                              className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${avatarId === a.id ? "bg-violet-600 text-white border-violet-600" : "border-slate-200 text-slate-500 hover:border-violet-400"}`}
+                            >
+                              {a.badge && <span className="mr-0.5">{a.badge}</span>}{a.label}
+                            </button>
+                            {a.preview && (
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50 pointer-events-none">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={a.preview}
+                                  alt={a.label}
+                                  className="w-24 h-32 object-cover rounded-lg shadow-xl border border-white/20"
+                                />
+                                <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-slate-800" />
+                              </div>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </div>
