@@ -24,6 +24,15 @@ import {
   Sparkles,
 } from "lucide-react";
 
+function LinkedInIcon({ size = 11 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/>
+      <circle cx="4" cy="4" r="2"/>
+    </svg>
+  );
+}
+
 const dayLabel = (day: number) =>
   day === 0 ? "Day 0 — Initial outreach" : `Day ${day} — Follow-up`;
 
@@ -44,6 +53,7 @@ export default function OutreachPage() {
   const [plans, setPlans] = useState<OutreachPlan[]>([]);
   const [generating, setGenerating] = useState<Set<string>>(new Set());
   const [sending, setSending] = useState<Set<string>>(new Set());
+  const [sendingLinkedIn, setSendingLinkedIn] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [error, setError] = useState<Record<string, string>>({});
   const [sendResult, setSendResult] = useState<Record<string, "ok" | "err">>({});
@@ -140,6 +150,47 @@ export default function OutreachPage() {
       }));
     } finally {
       setSending((prev) => {
+        const next = new Set(prev);
+        next.delete(plan.leadId);
+        return next;
+      });
+    }
+  }
+
+  async function sendLinkedInDM(plan: OutreachPlan, lead: Prospect) {
+    if (!lead.linkedin_url) return;
+    setSendingLinkedIn((prev) => new Set(prev).add(plan.leadId));
+    setError((prev) => ({ ...prev, [plan.leadId]: "" }));
+    try {
+      const day0 = plan.steps.find((s) => s.day === 0);
+      if (!day0) throw new Error("No Day 0 message in plan");
+
+      // LinkedIn DM はメール本文を短縮して送る（300字目安）
+      const dmText = day0.body.slice(0, 300) + (day0.body.length > 300 ? "…" : "");
+
+      const res = await fetch("/api/outreach/linkedin-dm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          linkedin_url: lead.linkedin_url,
+          message: dmText,
+          contact: plan.contact,
+          company: plan.company,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "LinkedIn DM failed");
+      updatePlanStatus(plan.leadId, "sent");
+      setSendResult((prev) => ({ ...prev, [plan.leadId]: "ok" }));
+      refreshPlans();
+    } catch (e) {
+      setSendResult((prev) => ({ ...prev, [plan.leadId]: "err" }));
+      setError((prev) => ({
+        ...prev,
+        [plan.leadId]: e instanceof Error ? e.message : "LinkedIn DM failed",
+      }));
+    } finally {
+      setSendingLinkedIn((prev) => {
         const next = new Set(prev);
         next.delete(plan.leadId);
         return next;
@@ -327,21 +378,37 @@ export default function OutreachPage() {
                   ))}
 
                   {plan.status === "approved" && (
-                    <div className="px-5 py-3 bg-amber-50/60 flex items-center justify-between">
+                    <div className="px-5 py-3 bg-amber-50/60 flex items-center justify-between gap-3 flex-wrap">
                       <span className="text-xs text-amber-700 font-semibold">
-                        ✓ Approved — Day 0 email ready to send
+                        ✓ Approved — Day 0 ready to send
                       </span>
-                      <button
-                        onClick={() => sendEmails(plan)}
-                        disabled={sending.has(lead.id)}
-                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-green-500 hover:bg-green-600 disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        {sending.has(lead.id) ? (
-                          <><Loader2 size={11} className="animate-spin" /> Sending…</>
-                        ) : (
-                          <><Send size={11} /> Send via Resend</>
-                        )}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {/* Email送信 */}
+                        <button
+                          onClick={() => sendEmails(plan)}
+                          disabled={sending.has(lead.id)}
+                          className="flex items-center gap-1.5 text-xs font-bold text-white bg-green-500 hover:bg-green-600 disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          {sending.has(lead.id) ? (
+                            <><Loader2 size={11} className="animate-spin" /> Sending…</>
+                          ) : (
+                            <><Mail size={11} /> Send Email</>
+                          )}
+                        </button>
+                        {/* LinkedIn DM送信 */}
+                        <button
+                          onClick={() => sendLinkedInDM(plan, lead)}
+                          disabled={sendingLinkedIn.has(lead.id) || !lead.linkedin_url}
+                          title={!lead.linkedin_url ? "LinkedIn URL not set for this lead" : "Send LinkedIn DM"}
+                          className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#0A66C2] hover:bg-[#004182] disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          {sendingLinkedIn.has(lead.id) ? (
+                            <><Loader2 size={11} className="animate-spin" /> Sending…</>
+                          ) : (
+                            <><LinkedInIcon size={11} /> LinkedIn DM</>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
                   {plan.status === "sent" && (
