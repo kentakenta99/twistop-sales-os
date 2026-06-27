@@ -143,17 +143,52 @@ function PlatformBadge({ platform }: { platform: Platform }) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    not_submitted: "bg-slate-100 text-slate-500",
-    processing:    "bg-amber-100 text-amber-700",
-    completed:     "bg-green-100 text-green-700",
-    failed:        "bg-red-100 text-red-600",
+function VideoStatusBadge({ status }: { status: string }) {
+  const configs: Record<string, { label: string; cls: string; pulse?: boolean }> = {
+    not_submitted: { label: "Script Only",       cls: "bg-slate-100 text-slate-500" },
+    processing:    { label: "Generating…",       cls: "bg-amber-100 text-amber-700", pulse: true },
+    completed:     { label: "Video Ready",       cls: "bg-blue-100 text-blue-700" },
+    failed:        { label: "Generation Failed", cls: "bg-red-100 text-red-600" },
   };
+  const c = configs[status] ?? { label: status, cls: "bg-slate-100 text-slate-500" };
   return (
-    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${map[status] ?? "bg-slate-100 text-slate-500"}`}>
-      {status.replace("_", " ")}
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${c.cls}`}>
+      {c.pulse && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
+      {c.label}
     </span>
+  );
+}
+
+function PostChannelButton({
+  platform, isPosted, jobId, onPosted,
+}: {
+  platform: Platform;
+  isPosted: boolean;
+  jobId: string;
+  onPosted: (jobId: string, platform: Platform) => void;
+}) {
+  const p = PLATFORMS.find(x => x.value === platform);
+  if (!p) return null;
+  const link = PLATFORM_LINKS[platform];
+
+  if (isPosted) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-green-50 text-green-600 border border-green-200">
+        <Check size={10} /> {p.label}
+      </span>
+    );
+  }
+
+  return (
+    <a
+      href={link ?? "#"}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={() => onPosted(jobId, platform)}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-opacity hover:opacity-80 ${p.color}`}
+    >
+      {p.icon} Post to {p.label}
+    </a>
   );
 }
 
@@ -343,6 +378,18 @@ export default function StudioPage() {
       await loadJobs();
     }
     setSubmittingHeyGen(false);
+  }
+
+  async function handleMarkPosted(jobId: string, platform: Platform) {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) return;
+    const updated = [...new Set([...job.posted_platforms, platform])];
+    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, posted_platforms: updated } : j));
+    await fetch(`/api/studio/jobs/${jobId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ posted_platforms: updated }),
+    });
   }
 
   async function handleDeleteJob(id: string) {
@@ -721,72 +768,84 @@ export default function StudioPage() {
               {jobs.map(job => (
                 <div key={job.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                   {/* Job header */}
-                  <div className="px-5 py-4 flex items-center gap-4 flex-wrap">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-bold text-slate-800 capitalize">{job.content_type.replace("_", " ")}</span>
-                        <StatusBadge status={job.heygen_status} />
-                        {job.platforms.map(p => <PlatformBadge key={p} platform={p} />)}
+                  <div className="px-5 pt-4 pb-3">
+                    {/* Row 1: タイトル + ステータス + アクション */}
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold text-slate-800 capitalize">
+                            {job.content_type.replace(/_/g, " ")}
+                          </span>
+                          <VideoStatusBadge status={job.heygen_status} />
+                        </div>
+                        {job.key_message && (
+                          <p className="text-xs text-slate-400 mt-0.5 truncate">{job.key_message}</p>
+                        )}
+                        <p className="text-[10px] text-slate-300 mt-0.5">
+                          {new Date(job.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </p>
                       </div>
-                      {job.key_message && (
-                        <p className="text-xs text-slate-400 mt-0.5 truncate">{job.key_message}</p>
-                      )}
-                      <p className="text-[10px] text-slate-300 mt-0.5">{new Date(job.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
-                    </div>
 
-                    {/* Engagement mini stats */}
-                    <div className="flex items-center gap-3 text-xs text-slate-400 flex-shrink-0">
-                      <span title="Views"><TrendingUp size={11} className="inline mr-0.5" />{job.views.toLocaleString()}</span>
-                      <span title="Likes">♥ {job.likes.toLocaleString()}</span>
-                      <span title="Follows">+{job.follows_gained}</span>
-                    </div>
+                      {/* Engagement stats */}
+                      <div className="flex items-center gap-3 text-xs text-slate-400 flex-shrink-0 pt-0.5">
+                        <span title="Views"><TrendingUp size={11} className="inline mr-0.5" />{job.views.toLocaleString()}</span>
+                        <span title="Likes">♥ {job.likes.toLocaleString()}</span>
+                        <span title="Follows">+{job.follows_gained}</span>
+                      </div>
 
-                    {/* Distribution links */}
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {job.video_url && (
-                        <a href={job.video_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-violet-100 text-violet-600 hover:bg-violet-200" title="Download video">
-                          <Video size={13} />
-                        </a>
-                      )}
-                      {job.platforms.map(p => {
-                        const link = PLATFORM_LINKS[p];
-                        return link ? (
-                          <a key={p} href={link} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200" title={`Post to ${p}`}>
-                            <ExternalLink size={13} />
-                          </a>
-                        ) : null;
-                      })}
-                    </div>
-
-                    {/* Save to Store / Expand / Delete */}
-                    <div className="flex gap-1 flex-shrink-0">
-                      {job.video_url && (
+                      {/* Save to Store / video dl / Expand / Delete */}
+                      <div className="flex gap-1 flex-shrink-0">
+                        {job.video_url && (
+                          <>
+                            <a href={job.video_url} target="_blank" rel="noopener noreferrer"
+                              className="p-1.5 rounded-lg bg-violet-50 text-violet-500 hover:bg-violet-100 transition-colors"
+                              title="Download video">
+                              <Video size={14} />
+                            </a>
+                            <button
+                              onClick={() => handleSaveToStore(job)}
+                              disabled={storingJobs.has(job.id) || storedJobs.has(job.id)}
+                              className="p-1.5 rounded-lg text-amber-500 hover:text-amber-700 hover:bg-amber-50 disabled:opacity-40 transition-colors"
+                              title="Save to Content Store"
+                            >
+                              {storedJobs.has(job.id)
+                                ? <Check size={14} className="text-green-500" />
+                                : storingJobs.has(job.id)
+                                  ? <RefreshCw size={14} className="animate-spin" />
+                                  : <Archive size={14} />}
+                            </button>
+                          </>
+                        )}
                         <button
-                          onClick={() => handleSaveToStore(job)}
-                          disabled={storingJobs.has(job.id) || storedJobs.has(job.id)}
-                          className="p-1.5 rounded-lg text-amber-500 hover:text-amber-700 hover:bg-amber-50 disabled:opacity-40 transition-colors"
-                          title="Save to Content Store"
+                          onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
                         >
-                          {storedJobs.has(job.id)
-                            ? <Check size={14} className="text-green-500" />
-                            : storingJobs.has(job.id)
-                              ? <RefreshCw size={14} className="animate-spin" />
-                              : <Archive size={14} />}
+                          {expandedJob === job.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </button>
-                      )}
-                      <button
-                        onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                      >
-                        {expandedJob === job.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteJob(job.id)}
-                        className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                        <button
+                          onClick={() => handleDeleteJob(job.id)}
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Row 2: チャンネル別投稿ボタン */}
+                    {job.platforms.length > 0 && (
+                      <div className="flex items-center gap-2 mt-3 flex-wrap">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Post to:</span>
+                        {job.platforms.map(p => (
+                          <PostChannelButton
+                            key={p}
+                            platform={p}
+                            isPosted={job.posted_platforms.includes(p)}
+                            jobId={job.id}
+                            onPosted={handleMarkPosted}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Expanded detail */}
