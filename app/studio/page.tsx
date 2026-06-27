@@ -355,14 +355,13 @@ export default function StudioPage() {
     setStoringJobs(prev => new Set(prev).add(job.id));
     const title = job.content_type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
       + (job.platforms.length ? ` — ${job.platforms.join(", ")}` : "");
-    await fetch("/api/content/save-metadata", {
+    // HeyGen署名付きURLをSupabase Storageにダウンロード保存（URL失効対策）
+    await fetch("/api/content/archive-heygen", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        videoUrl: job.video_url,
         title,
-        type: "video",
-        url: job.video_url,
-        thumbnail_url: job.thumbnail_url ?? null,
         tags: [job.content_type, ...job.platforms],
       }),
     });
