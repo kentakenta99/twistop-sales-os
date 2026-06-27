@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
 
-const ALLOWED_EMAILS = ["kenta_yagi@wishbone.tokyo", "damonj@acuver.com"];
+const ALLOWED_EMAILS = ["kenta_yagi@wishbone.tokyo", "damonj@acuver.com", "kentakenta99@gmail.com"];
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
