@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { contentAssets, type ContentType } from "@/lib/mockData";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
-import { Mail, Share2, Download, Upload, X, Loader2, CheckCircle } from "lucide-react";
+import { Mail, Share2, Download, Upload, X, Loader2, CheckCircle, Trash2 } from "lucide-react";
 
 type FilterType = "all" | ContentType;
 
@@ -12,6 +12,7 @@ type UploadedAsset = {
   title: string;
   type: ContentType;
   url: string;
+  storage_path: string | null;
   tags: string[];
   created_at: string;
 };
@@ -54,6 +55,7 @@ const categoryStyle: Record<string, string> = {
 export default function ContentPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [uploaded, setUploaded] = useState<UploadedAsset[]>([]);
+  const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const [showModal, setShowModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -71,6 +73,13 @@ export default function ContentPage() {
       .then((d) => { if (d.assets) setUploaded(d.assets); })
       .catch(() => {});
   }, []);
+
+  async function deleteAsset(id: string) {
+    setDeleting((prev) => new Set(prev).add(id));
+    await fetch(`/api/content/${id}`, { method: "DELETE" });
+    setUploaded((prev) => prev.filter((a) => a.id !== id));
+    setDeleting((prev) => { const next = new Set(prev); next.delete(id); return next; });
+  }
 
   function openModal() {
     setShowModal(true);
@@ -203,7 +212,7 @@ export default function ContentPage() {
         {filtered.map((asset) => (
           <div
             key={asset.id}
-            className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 hover:shadow-sm transition-all"
+            className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 hover:shadow-sm transition-all group relative"
           >
             {/* Thumbnail */}
             <div className={`h-36 flex items-center justify-center text-5xl relative overflow-hidden ${thumbnailBg[asset.type as ContentType]} border-b border-slate-100`}>
@@ -227,9 +236,21 @@ export default function ContentPage() {
                 typeEmoji[asset.type as ContentType]
               )}
               {"isMock" in asset && !asset.isMock && (
-                <span className="absolute top-2 right-2 text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded">
-                  NEW
-                </span>
+                <>
+                  <span className="absolute top-2 right-2 text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded">
+                    NEW
+                  </span>
+                  <button
+                    onClick={() => deleteAsset(asset.id)}
+                    disabled={deleting.has(asset.id)}
+                    className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 p-1.5 bg-white/90 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg shadow-sm transition-all disabled:opacity-50"
+                    title="Delete"
+                  >
+                    {deleting.has(asset.id)
+                      ? <Loader2 size={13} className="animate-spin" />
+                      : <Trash2 size={13} />}
+                  </button>
+                </>
               )}
             </div>
 

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from("content_assets")
-    .select("id, title, type, url, tags, created_at")
+    .select("id, title, type, url, storage_path, tags, created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
