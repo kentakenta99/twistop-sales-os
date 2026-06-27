@@ -51,14 +51,7 @@ export interface ContentAsset {
   thumbnail: string;
 }
 
-export const contentAssets: ContentAsset[] = [
-  { id: 'c1', title: 'TwisTop Demo — Nikka + Wilkinson',      type: 'video', category: 'Product Demo',    tags: ['whisky', 'highball', 'Japan'],      markets: ['JP', 'AU', 'UK'],  createdBy: 'Damon',    uploadedAt: '2026-06-20', thumbnail: '🥃' },
-  { id: 'c2', title: 'Grey Goose + Monster Energy Combo',     type: 'video', category: 'Viral',           tags: ['vodka', 'energy', 'esports'],       markets: ['US', 'UK', 'AU'],  createdBy: 'Damon',    uploadedAt: '2026-06-18', thumbnail: '⚡' },
-  { id: 'c3', title: 'TwisTop Pitch Deck v2.1',               type: 'pdf',   category: 'Business Pitch',  tags: ['investor', 'B2B', 'global'],        markets: ['Global'],          createdBy: 'internal', uploadedAt: '2026-06-22', thumbnail: '📊' },
-  { id: 'c4', title: 'Partner Program Overview',              type: 'pdf',   category: 'Business Pitch',  tags: ['distributor', 'exclusive', 'terms'], markets: ['Global'],          createdBy: 'internal', uploadedAt: '2026-06-23', thumbnail: '🤝' },
-  { id: 'c5', title: 'Event Setup Guide — 60 Second Hero',    type: 'image', category: 'Product Demo',    tags: ['setup', 'quick', 'festival'],       markets: ['Global'],          createdBy: 'Damon',    uploadedAt: '2026-06-19', thumbnail: '🎪' },
-  { id: 'c6', title: 'Social Post Pack — Summer Vibes',       type: 'gif',   category: 'Viral',           tags: ['summer', 'social', 'instagram'],    markets: ['US', 'AU'],        createdBy: 'Damon',    uploadedAt: '2026-06-21', thumbnail: '☀️' },
-];
+export const contentAssets: ContentAsset[] = [];
 
 export const AXIS_A_STAGES: AxisAStage[] = ['Cold', 'Contacted', 'Responded', 'Demo', 'Proposal', 'Won'];
 export const AXIS_B_STAGES: AxisBStage[] = ['Cold', 'Contacted', 'NDA Signed', 'Term Sheet', 'Contracted', 'Active'];
