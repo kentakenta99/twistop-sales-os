@@ -903,7 +903,7 @@ function PostCard({ post, onPin, onDelete, onReact, me }: {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: commentText, author_id: me.id }),
     }).then((r) => r.json());
-    if (res.comment) setComments((prev) => [...prev, res.comment]);
+    if (res.comment) await loadComments();
     setCommentText("");
     setPostingComment(false);
   }
