@@ -994,7 +994,7 @@ function PostCard({ post, onPin, onDelete, onReact, me }: {
                 <textarea
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitComment(); } }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submitComment(); } }}
                   rows={1}
                   placeholder="Write a comment…"
                   className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400/50 resize-none"
