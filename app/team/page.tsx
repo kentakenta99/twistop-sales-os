@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Plus, Pin, Trash2, CheckCircle2, Circle, Clock, AlertCircle, X, Smile,
-  ChevronLeft, ChevronRight, Star, Pencil,
+  ChevronLeft, ChevronRight, Star, Pencil, MessageCircle, Send,
 } from "lucide-react";
 import { getCurrentUser, KNOWN_USERS, type AppUser } from "@/lib/currentUser";
 
@@ -23,6 +23,11 @@ type Task = {
 };
 
 type Reaction = { id: string; emoji: string; user_id: string };
+
+type Comment = {
+  id: string; post_id: string; content: string;
+  author: User | null; created_at: string;
+};
 
 type Post = {
   id: string; title: string; content: string;
@@ -864,12 +869,50 @@ function PostCard({ post, onPin, onDelete, onReact, me }: {
   me: AppUser | null;
 }) {
   const [showEmojis, setShowEmojis] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [postingComment, setPostingComment] = useState(false);
+
   const grouped: Record<string, { count: number; mine: boolean }> = {};
   for (const r of post.reactions ?? []) {
     if (!grouped[r.emoji]) grouped[r.emoji] = { count: 0, mine: false };
     grouped[r.emoji].count++;
     if (me && r.user_id === me.id) grouped[r.emoji].mine = true;
   }
+
+  async function loadComments() {
+    if (loadingComments) return;
+    setLoadingComments(true);
+    const res = await fetch(`/api/team/board/${post.id}/comments`).then((r) => r.json());
+    setComments(res.comments ?? []);
+    setLoadingComments(false);
+  }
+
+  function toggleComments() {
+    if (!showComments && comments.length === 0) loadComments();
+    setShowComments((v) => !v);
+  }
+
+  async function submitComment() {
+    if (!commentText.trim() || !me) return;
+    setPostingComment(true);
+    const res = await fetch(`/api/team/board/${post.id}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: commentText, author_id: me.id }),
+    }).then((r) => r.json());
+    if (res.comment) setComments((prev) => [...prev, res.comment]);
+    setCommentText("");
+    setPostingComment(false);
+  }
+
+  async function deleteComment(commentId: string) {
+    await fetch(`/api/team/board/${post.id}/comments/${commentId}`, { method: "DELETE" });
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  }
+
   return (
     <div className={`bg-white rounded-xl border ${post.pinned ? "border-amber-200 shadow-amber-50" : "border-slate-200"} shadow-sm p-5 group`}>
       {post.pinned && <div className="flex items-center gap-1.5 text-amber-600 text-[11px] font-bold mb-2"><Pin size={11} /> Pinned</div>}
@@ -887,6 +930,8 @@ function PostCard({ post, onPin, onDelete, onReact, me }: {
         </div>
       </div>
       <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{post.content}</p>
+
+      {/* Reactions + Comment toggle */}
       <div className="flex items-center gap-1.5 mt-4 flex-wrap">
         {Object.entries(grouped).map(([emoji, { count, mine }]) => (
           <button key={emoji} onClick={() => onReact(post.id, emoji)} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${mine ? "bg-amber-50 border-amber-300 text-amber-700" : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300"}`}>
@@ -905,7 +950,69 @@ function PostCard({ post, onPin, onDelete, onReact, me }: {
             </div>
           )}
         </div>
+        <button
+          onClick={toggleComments}
+          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${showComments ? "bg-slate-100 border-slate-300 text-slate-700" : "border-dashed border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-600"}`}
+        >
+          <MessageCircle size={12} />
+          {comments.length > 0 && <span className="font-semibold">{comments.length}</span>}
+        </button>
       </div>
+
+      {/* Comments section */}
+      {showComments && (
+        <div className="mt-4 border-t border-slate-100 pt-4 space-y-3">
+          {loadingComments && <div className="text-xs text-slate-400">Loading…</div>}
+          {comments.map((c) => (
+            <div key={c.id} className="flex gap-2.5 group/comment">
+              <Avatar user={c.author} size={6} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xs font-semibold text-slate-800">{c.author?.name ?? "Unknown"}</span>
+                  <span className="text-[10px] text-slate-400">{timeAgo(c.created_at)}</span>
+                  {me && c.author?.id === me.id && (
+                    <button
+                      onClick={() => deleteComment(c.id)}
+                      className="ml-auto opacity-0 group-hover/comment:opacity-100 transition-opacity text-slate-300 hover:text-red-400 p-0.5"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mt-0.5">{c.content}</p>
+              </div>
+            </div>
+          ))}
+          {comments.length === 0 && !loadingComments && (
+            <div className="text-xs text-slate-400">No comments yet.</div>
+          )}
+          {/* Comment input */}
+          {me ? (
+            <div className="flex gap-2 items-end pt-1">
+              <Avatar user={me} size={6} />
+              <div className="flex-1 flex gap-2">
+                <textarea
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitComment(); } }}
+                  rows={1}
+                  placeholder="Write a comment…"
+                  className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400/50 resize-none"
+                />
+                <button
+                  onClick={submitComment}
+                  disabled={!commentText.trim() || postingComment}
+                  className="p-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white rounded-lg transition-colors"
+                >
+                  <Send size={13} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-slate-400">Select your identity to comment.</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
