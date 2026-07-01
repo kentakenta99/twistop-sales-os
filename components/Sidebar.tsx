@@ -39,6 +39,7 @@ const navItems = [
   { href: "/content",   label: "Content Store",    icon: FolderOpen,      accent: false },
   { href: "/team",      label: "Team",             icon: UsersRound,      accent: false },
   { href: "/settings",  label: "Settings",         icon: Settings,        accent: false },
+  { href: "/feedback",  label: "Feedback",         icon: Sparkles,        accent: true  },
 ];
 
 const comingSoon = [
